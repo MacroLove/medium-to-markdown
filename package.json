@@ -19,6 +19,8 @@
   ],
   "dependencies": {
     "cheerio": "^1.0.0-rc.3",
+    "commander": "^11.1.0",
+    "puppeteer": "^21.7.0",
     "request": "^2.88.0",
     "turndown": "^5.0.3",
     "turndown-plugin-gfm": "^1.0.2"

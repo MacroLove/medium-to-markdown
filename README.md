@@ -19,7 +19,7 @@ You can also check out the [README of the original repo](https://github.com/dtes
 ## Workflow for paywall articles
 You will need some way to get the raw HTML page of the full article. There's probably multiple ways to do this, but I managed to get things working with this specific approach.
 
-For this, you will need some way to access the raw HTML of **full** articles. The easiest solution I could find is to use the [Bypass Paywalls Clean Chrome](https://gitlab.com/magnolia1234/bypass-paywalls-chrome-clean) extension. (It should be free of malware, but use it at your own risk - for alternatives see also [this Reddit thread](https://www.reddit.com/r/firefox/comments/12iarpr/bypass_paywalls_clean_firefoxchrome/).)
+For this, you will need some way to access the raw HTML of **full** articles. The easiest solution I could find is to use the [Bypass Paywalls Clean Chrome](https://gitlab.com/magnolia1234/bypass-paywalls-chrome-clean) extension. (It should be free of malware, but use it at your own risk - for alternatives see also [this Reddit thread](https://www.reddit.com/r/firefox/comments/12iarpr/bypass_paywalls_clean_firefoxchrome/))
 
 Once installed, it should show you a link to a cached version of the full Medium article whenever you visit a paywalled article. You can then use the following workflow to convert the article to Markdown.
 
