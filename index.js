@@ -1,10 +1,11 @@
 'use strict';
 
 const { program } = require('commander');
-const { convertFromUrl, convertHtml } = require('./lib/convert');
+const convertHtmlToMarkdown = require('./lib/convertHtmlToMarkdown');
+const articleHtmlFromMedium = require('./lib/articleHtmlFromMedium');
 const articleHtmlFromWebCache = require('./lib/articleHtmlFromWebCache');
+const getLinks = require('./lib/getLinks');
 const fs = require('fs');
-const path = require('path');
 
 /**
  * Converts a Medium article URL (or its webcache URL for paywall articles) to markdown markup.
@@ -18,25 +19,41 @@ const path = require('path');
  *
  * Incompatibilities with the file system are handled accordingly.
  *
- * @param {string} url - The URL to convert content from.
+ * @param {string} inputUrl - The URL to convert content from. Can be the regular URL of a free Medium/Towards Data Science etc. article or a Google Webcache URL (if it is hidden behind a paywall).
  * @returns {Promise<void>} - A promise that resolves when the conversion is complete and the markdown has been printed.
  */
-async function main(url) {
-  const markdown = await getMarkdown(url);
-  const filePath = urlToFilePath(url);
-  const targetPath = `out/${filePath}.md`;
-  const targetDir = path.dirname(targetPath);
-  fs.mkdirSync(targetDir, { recursive: true });
-  fs.writeFileSync(targetPath, markdown);
+async function main(inputUrl) {
+  const html = await getHtml(inputUrl);
+  const url = isWebCacheUrl ? extractOriginalURl(inputUrl) : inputUrl;
+  const markdown = convertHtmlToMarkdown(url);
+  const links = getLinks(url, html);
+
+  const folderPath = `out/${urlToLocalPath(url)}`;
+  fs.mkdirSync(folderPath, { recursive: true });
+
+  fs.writeFileSync(`${folderPath}/article.md`, markdown);
+  fs.writeFileSync(`${folderPath}/links.json`, JSON.stringify(links));
+}
+
+const webcacheUrlPrefix =
+  'https://webcache.googleusercontent.com/search?q=cache:';
+
+function isWebCacheUrl(url) {
+  return url.startsWith(webcacheUrlPrefix);
+}
+
+function extractOriginalURl(webcacheUrl) {
+  return webcacheUrl.replace(webcacheUrlPrefix, '');
 }
 
 /**
- * Converts a URL to a file path. Handles incompatibilities with the file system and converts google webcache URLs to the original URL beforehand.
+ * Converts a URL to a valid file path.
+ *
  * @param {string} url - The URL to convert.
  *
  * @returns {string} - The converted file path.
  */
-function urlToFilePath(url) {
+function urlToLocalPath(url) {
   const webcacheUrlPrefix =
     'https://webcache.googleusercontent.com/search?q=cache:';
   if (url.startsWith(webcacheUrlPrefix)) {
@@ -52,25 +69,14 @@ function urlToFilePath(url) {
   return filePath;
 }
 
-/**
- * Gets the markdown for a Medium article URL.
- *
- * If the URL is a Google Webcache URL, the article HTML is extracted from the webcache.
- * Otherwise, the article HTML is fetched from the URL.
- *
- * @param {string} url - The URL to get the markdown for.
- * @returns {Promise<string>} - A promise that resolves with the markdown.
- */
-async function getMarkdown(url) {
-  if (url.includes('webcache.googleusercontent.com')) {
+async function getHtml(url) {
+  if (isWebCacheUrl(url)) {
     console.log('Extracting article HTML from Google Webcache...');
-    const html = await articleHtmlFromWebCache(url);
-    console.log('Converting HTML to Markdown...');
-    return convertHtml(html);
+    return articleHtmlFromWebCache(url);
+  } else {
+    console.log('Fetching article HTML from Medium...');
+    return articleHtmlFromMedium(url);
   }
-  console.log('Assuming article is a non-paywall Medium article');
-  console.log('Converting article to Markdown...');
-  return convertFromUrl(url);
 }
 
 program.name('medium-to-md').option('<url>').option('[target-path]');
